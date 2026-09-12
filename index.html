@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Disaster Resource Mapper - "Mapping Resources. Connecting People. Saving Lives."</title>
+  <meta name="description" content="AI-powered real-time disaster management platform for resource mapping, verification, volunteer coordination, and emergency response." />
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚨</text></svg>">
+  
+  <!-- CSS Design System -->
+  <link rel="stylesheet" href="styles.css" />
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="256-24b0b1cc46fb8cf9a9d28d00346c764e" crossorigin="" />
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js for Dashboards -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0B0F19" />
+</head>
+<body>
+
+  <!-- Animated Background Canvas -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- Navigation Bar -->
+  <header class="glass-nav sticky-nav" style="position: sticky; top: 0; z-index: 900;">
+    <div style="max-width: 1440px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+      
+      <!-- Brand Logo -->
+      <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="switchTab('landing')">
+        <div style="width: 42px; height: 42px; background: linear-gradient(135deg, #2563EB, #DC2626); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);">
+          <i data-lucide="shield-alert" style="width: 26px; height: 26px;"></i>
+        </div>
+        <div>
+          <h2 style="font-size: 1.15rem; font-weight: 800; line-height: 1.1; margin: 0;">
+            Disaster<span style="color: var(--color-primary);">Mapper</span> <span style="font-size: 0.75rem; background: rgba(37, 99, 235, 0.2); color: #60A5FA; padding: 2px 6px; border-radius: 4px; font-weight: 600;">AI v2.4</span>
+          </h2>
+          <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;">Mapping Resources. Saving Lives.</p>
+        </div>
+      </div>
+
+      <!-- Live Emergency Ticker -->
+      <div class="glass-card" style="padding: 6px 14px; display: flex; align-items: center; gap: 12px; font-size: 0.8rem; font-weight: 600; border-radius: 20px;">
+        <div class="pulse-marker-critical" style="width: 10px; height: 10px;"></div>
+        <span id="live-ticker-text">ALERT: Cyclone Alpha Category 4 landfall in Bay Region. Emergency evacuation active.</span>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav style="display: flex; gap: 6px; overflow-x: auto; padding: 4px 0;" id="main-nav-links">
+        <button class="btn btn-secondary active" onclick="switchTab('landing')"><i data-lucide="home" style="width:16px;"></i> Home</button>
+        <button class="btn btn-secondary" onclick="switchTab('map')"><i data-lucide="map" style="width:16px;"></i> Live Map</button>
+        <button class="btn btn-secondary" onclick="switchTab('ai-verify')"><i data-lucide="brain-circuit" style="width:16px;"></i> AI Verify</button>
+        <button class="btn btn-secondary" onclick="switchTab('resources')"><i data-lucide="box" style="width:16px;"></i> Resources</button>
+        <button class="btn btn-secondary" onclick="switchTab('volunteers')"><i data-lucide="users" style="width:16px;"></i> Volunteers</button>
+        <button class="btn btn-secondary" onclick="switchTab('request-help')"><i data-lucide="life-buoy" style="width:16px;"></i> Request Aid</button>
+        <button class="btn btn-secondary" onclick="switchTab('dashboards')"><i data-lucide="layout-dashboard" style="width:16px;"></i> Dashboards</button>
+      </nav>
+
+      <!-- Right Utility Bar (Role Switcher, Language, Theme, SOS) -->
+      <div style="display: flex; align-items: center; gap: 10px;">
+        
+        <!-- Role Switcher -->
+        <select class="form-select" id="role-selector" style="width: auto; font-size: 0.8rem; font-weight: 600; padding: 6px 10px;" onchange="handleRoleChange(this.value)">
+          <option value="Citizen">Role: Citizen</option>
+          <option value="Volunteer">Role: Volunteer</option>
+          <option value="Hospital">Role: Hospital / Relief</option>
+          <option value="Government">Role: Govt Authority</option>
+          <option value="NGO">Role: NGO Partner</option>
+          <option value="Admin">Role: System Admin</option>
+        </select>
+
+        <!-- Language Selector -->
+        <select class="form-select" id="lang-selector" style="width: auto; font-size: 0.8rem; padding: 6px 8px;" onchange="handleLangChange(this.value)">
+          <option value="en">🌐 EN</option>
+          <option value="es">🌐 ES</option>
+          <option value="hi">🌐 HI</option>
+          <option value="fr">🌐 FR</option>
+        </select>
+
+        <!-- Dark/Light Theme Toggle -->
+        <button class="btn btn-secondary" style="padding: 8px;" onclick="toggleTheme()" title="Toggle Dark/Light Mode" id="theme-btn">
+          <i data-lucide="sun" style="width: 18px; height: 18px;"></i>
+        </button>
+
+        <!-- Quick SOS Header Trigger -->
+        <button class="btn btn-danger" style="font-size: 0.8rem; padding: 6px 12px;" onclick="triggerSOSModal()">
+          <i data-lucide="siren" style="width: 16px;"></i> SOS
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Application Main Container -->
+  <main class="app-container">
+
+    <!-- VIEW 1: LANDING & HERO SECTION -->
+    <section id="view-landing" class="view-section active" style="padding-top: 30px;">
+      
+      <!-- Hero Banner -->
+      <div class="glass-card" style="padding: 40px; text-align: center; background: radial-gradient(circle at center, rgba(37, 99, 235, 0.15) 0%, rgba(15, 23, 42, 0.4) 100%); position: relative; overflow: hidden; margin-bottom: 30px;">
+        <span class="badge badge-info" style="margin-bottom: 16px;"><i data-lucide="zap" style="width: 12px;"></i> AI-Powered Real-Time Disaster Intelligence</span>
+        
+        <h1 style="font-size: 3rem; margin-bottom: 16px; font-weight: 800;" class="gradient-text">
+          AI Disaster Resource Mapper
+        </h1>
+        
+        <p style="font-size: 1.2rem; color: var(--text-muted); max-width: 780px; margin: 0 auto 28px auto;">
+          An enterprise-grade disaster management ecosystem collecting live hazard reports, verifying incidents via Gemini AI, matching emergency resources instantly, and coordinating rescue operations.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px;">
+          <button class="btn btn-danger" style="padding: 14px 28px; font-size: 1rem;" onclick="triggerSOSModal()">
+            <i data-lucide="bell-ring"></i> Report Emergency SOS
+          </button>
+          <button class="btn btn-primary" style="padding: 14px 28px; font-size: 1rem;" onclick="switchTab('request-help')">
+            <i data-lucide="hand-heart"></i> Request Relief Aid
+          </button>
+          <button class="btn btn-secondary" style="padding: 14px 28px; font-size: 1rem;" onclick="switchTab('map')">
+            <i data-lucide="map-pin"></i> View Live Map
+          </button>
+          <button class="btn btn-success" style="padding: 14px 28px; font-size: 1rem;" onclick="switchTab('volunteers')">
+            <i data-lucide="user-plus"></i> Become Volunteer
+          </button>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 15px; font-size: 0.85rem; color: var(--text-muted);">
+          <span><i data-lucide="check-circle" style="width: 14px; color: var(--color-success);"></i> 99.4% AI Report Accuracy</span>
+          <span><i data-lucide="clock" style="width: 14px; color: var(--color-primary);"></i> Sub-Second Dispatch Matching</span>
+          <span><i data-lucide="lock" style="width: 14px; color: var(--color-warning);"></i> Enterprise Encrypted Protocol</span>
+        </div>
+      </div>
+
+      <!-- Live Statistics Counter Grid -->
+      <h2 style="font-size: 1.3rem; margin-bottom: 16px;"><i data-lucide="activity" style="color: var(--color-primary);"></i> Live Global Response Metrics</h2>
+      
+      <div class="grid-cols-auto" style="margin-bottom: 36px;">
+        <div class="glass-card" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(220, 38, 38, 0.2); color: #EF4444; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="flame" style="width: 28px; height: 28px;"></i>
+          </div>
+          <div>
+            <div style="font-size: 1.8rem; font-weight: 800;" id="stat-active-emergencies">42</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Active Emergencies</div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(22, 163, 74, 0.2); color: #22C55E; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="user-check" style="width: 28px; height: 28px;"></i>
+          </div>
+          <div>
+            <div style="font-size: 1.8rem; font-weight: 800;" id="stat-people-rescued">14,890</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">People Rescued</div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(147, 51, 234, 0.2); color: #C084FC; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="users" style="width: 28px; height: 28px;"></i>
+          </div>
+          <div>
+            <div style="font-size: 1.8rem; font-weight: 800;" id="stat-volunteers-online">3,412</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Volunteers Online</div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
+          <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(37, 99, 235, 0.2); color: #60A5FA; display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="building-2" style="width: 28px; height: 28px;"></i>
+          </div>
+          <div>
+            <div style="font-size: 1.8rem; font-weight: 800;" id="stat-hospitals-shelters">328</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Hospitals & Shelters</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Feed & Recent Incidents Grid -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        
+        <!-- Recent Verified Incident Stream -->
+        <div class="glass-card" style="padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="rss" style="color: var(--color-danger);"></i> Real-Time Incident Stream
+            </h3>
+            <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="refreshIncidentFeed()">
+              <i data-lucide="rotate-cw" style="width: 14px;"></i> Refresh
+            </button>
+          </div>
+
+          <div id="incident-feed-list" style="display: flex; flex-direction: column; gap: 14px;">
+            <!-- Incidents injected dynamically -->
+          </div>
+        </div>
+
+        <!-- Quick AI System Overview Card -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          
+          <div class="glass-card" style="padding: 20px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(147, 51, 234, 0.1));">
+            <h3 style="font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="bot" style="color: var(--color-primary);"></i> AI Gemini Assistant Active
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+              Ask questions about emergency contacts, first aid guidance, or closest active relief centers in your region.
+            </p>
+            <button class="btn btn-primary" style="width: 100%;" onclick="toggleChatbot()">
+              <i data-lucide="message-square"></i> Open AI Disaster Chat
+            </button>
+          </div>
+
+          <div class="glass-card" style="padding: 20px;">
+            <h3 style="font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="shield-check" style="color: var(--color-success);"></i> System Health Status
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between;"><span>Map Engine (Leaflet / Google)</span> <span class="badge badge-safe">ONLINE</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>AI Verification Pipeline</span> <span class="badge badge-safe">ONLINE</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>SMS / Voice Gateway</span> <span class="badge badge-safe">READY</span></div>
+              <div style="display: flex; justify-content: space-between;"><span>Resource Matcher Engine</span> <span class="badge badge-safe">ACTIVE</span></div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- VIEW 2: INTERACTIVE LIVE MAP -->
+    <section id="view-map" class="view-section" style="display: none; padding-top: 20px;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+            <i data-lucide="map-pin" style="color: var(--color-danger);"></i> Interactive Disaster & Resource Map
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">Real-time monitoring of hazards, shelters, hospitals, rescue teams, and safe evacuation corridors.</p>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <!-- Map Style Toggle -->
+          <div class="glass-card" style="padding: 4px; display: flex; gap: 4px;">
+            <button class="btn btn-secondary active" style="font-size: 0.75rem; padding: 4px 8px;" id="map-style-standard" onclick="setMapStyle('standard')">Standard</button>
+            <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" id="map-style-satellite" onclick="setMapStyle('satellite')">Satellite</button>
+            <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" id="map-style-dark" onclick="setMapStyle('dark')">Dark Mode</button>
+          </div>
+
+          <!-- Category Filter -->
+          <select class="form-select" style="width: auto; font-size: 0.85rem;" id="map-filter-category" onchange="filterMapMarkers()">
+            <option value="all">Filter: All Layers</option>
+            <option value="disasters">Disasters Only</option>
+            <option value="resources">Resources & Camps</option>
+            <option value="hospitals">Hospitals & Medical</option>
+            <option value="volunteers">Volunteers & Teams</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Map Canvas Container -->
+      <div class="glass-card" style="height: 600px; position: relative; overflow: hidden; border-radius: var(--radius-lg);">
+        <div id="disaster-leaflet-map" style="width: 100%; height: 100%; z-index: 10;"></div>
+        
+        <!-- Floating Map Legend Overlay -->
+        <div class="glass-card" style="position: absolute; bottom: 20px; left: 20px; z-index: 500; padding: 12px 16px; font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px; max-width: 240px;">
+          <div style="font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 4px;">Map Legend</div>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #DC2626;"></span> Critical Incident (Red)</div>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #EA580C;"></span> Medium Risk (Orange)</div>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #2563EB;"></span> Relief Resource (Blue)</div>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #16A34A;"></span> Safe Shelter (Green)</div>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #9333EA;"></span> Volunteer Team (Purple)</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- VIEW 3: AI REPORT VERIFICATION STUDIO -->
+    <section id="view-ai-verify" class="view-section" style="display: none; padding-top: 20px;">
+      
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+          <i data-lucide="brain-circuit" style="color: var(--color-primary);"></i> AI Incident Verification Engine
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Submit emergency reports with photos or audio. Gemini AI algorithms automatically filter duplicate reports, detect fake news, classify urgency, and calculate confidence scores.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        
+        <!-- Incident Report Form -->
+        <div class="glass-card" style="padding: 24px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 16px;"><i data-lucide="file-text"></i> Submit Disaster Report</h3>
+          
+          <form id="ai-report-form" onsubmit="handleAIReportSubmit(event)">
+            <div class="form-group">
+              <label class="form-label">Disaster Type</label>
+              <select class="form-select" id="report-type" required>
+                <option value="Flood">Flood / Inundation</option>
+                <option value="Wildfire">Wildfire / Forest Fire</option>
+                <option value="Earthquake">Earthquake / Structural Damage</option>
+                <option value="Medical Emergency">Mass Casualty Medical Emergency</option>
+                <option value="Missing Person">Missing Person Search</option>
+                <option value="Building Collapse">Building Structural Collapse</option>
+                <option value="Food & Water Shortage">Critical Food & Water Shortage</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Report Description & Details</label>
+              <textarea class="form-control" id="report-desc" rows="4" placeholder="Describe what is happening, number of people trapped or affected, severity..." required>Severe flash flooding near River Bridge Road. Over 15 residents stuck on rooftop needing immediate rescue boat assistance.</textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+              <div class="form-group">
+                <label class="form-label">GPS Location Coordinates</label>
+                <div style="display: flex; gap: 6px;">
+                  <input type="text" class="form-control" id="report-location" value="37.7749, -122.4194" required />
+                  <button type="button" class="btn btn-secondary" onclick="autoDetectGPS()"><i data-lucide="crosshair"></i></button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Reporter Contact Phone</label>
+                <input type="tel" class="form-control" id="report-phone" value="+1 (555) 019-2834" required />
+              </div>
+            </div>
+
+            <!-- Upload Photo / Audio Simulation -->
+            <div class="form-group">
+              <label class="form-label">Evidence Media (Photo / Voice Note)</label>
+              <div style="border: 2px dashed var(--border-color); border-radius: var(--radius-sm); padding: 16px; text-align: center; background: rgba(0,0,0,0.1);">
+                <i data-lucide="upload-cloud" style="width: 32px; height: 32px; color: var(--color-primary); margin-bottom: 8px;"></i>
+                <div style="font-size: 0.85rem; font-weight: 600;">Drag photo or click to attach voice message</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Simulated image: disaster_flood_roof.jpg (Loaded)</div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">
+              <i data-lucide="cpu"></i> Run Gemini AI Analysis & Publish Report
+            </button>
+          </form>
+        </div>
+
+        <!-- AI Verification Results Studio -->
+        <div class="glass-card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="sparkles" style="color: #C084FC;"></i> Gemini AI Analysis Output
+            </h3>
+
+            <div id="ai-verification-output" style="display: flex; flex-direction: column; gap: 16px;">
+              
+              <div style="background: rgba(37, 99, 235, 0.1); border: 1px solid var(--border-glow); padding: 16px; border-radius: var(--radius-md);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-weight: 700;">Verification Status</span>
+                  <span class="badge badge-safe" id="ai-badge-status"><i data-lucide="check-circle" style="width:12px;"></i> VERIFIED & AUTHENTIC</span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);" id="ai-verdict-summary">
+                  Gemini multimodal vision and cross-reference check confirmed real flash flood hazard. No duplicate reports found within 500m radius.
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="glass-card" style="padding: 14px; text-align: center;">
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">AI Confidence Score</div>
+                  <div style="font-size: 1.6rem; font-weight: 800; color: var(--color-success);" id="ai-confidence-score">98.5%</div>
+                </div>
+
+                <div class="glass-card" style="padding: 14px; text-align: center;">
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">Calculated Urgency</div>
+                  <div style="font-size: 1.6rem; font-weight: 800; color: var(--color-danger);" id="ai-urgency-level">CRITICAL</div>
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label">Auto-Extracted Keywords & Tags</label>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="ai-extracted-tags">
+                  <span class="badge badge-info">#FlashFlood</span>
+                  <span class="badge badge-critical">#RooftopTrap</span>
+                  <span class="badge badge-warning">#BoatRescueNeeded</span>
+                  <span class="badge badge-purple">#15Residents</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label">Recommended Response Action</label>
+                <div style="font-size: 0.85rem; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;" id="ai-response-recommendation">
+                  Dispatch Rescue Boat Team Bravo (2.1 km away, ETA 8 mins). Alert St. Mary Hospital Emergency Ward.
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <button class="btn btn-success" style="width: 100%;" onclick="autoDispatchAIRecommendation()">
+              <i data-lucide="send"></i> Auto-Dispatch Resources Now
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- VIEW 4: SMART RESOURCE MATCHING & SUPPLY CHAIN -->
+    <section id="view-resources" class="view-section" style="display: none; padding-top: 20px;">
+      
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+          <i data-lucide="box" style="color: var(--color-primary);"></i> Smart Resource Allocation & Inventory Engine
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          AI-driven nearest resource matcher pairing emergency victim requests with active food camps, rescue boats, ambulances, and available hospital beds.
+        </p>
+      </div>
+
+      <!-- Resource Supply Gauges -->
+      <div class="grid-cols-auto" style="margin-bottom: 28px;">
+        <div class="glass-card" style="padding: 16px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600; font-size: 0.9rem;"><i data-lucide="utensils" style="width: 16px; color: var(--color-warning);"></i> Food Meal Packs</span>
+            <span style="font-weight: 700; color: var(--color-success);">24,500 Units</span>
+          </div>
+          <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+            <div style="width: 78%; height: 100%; background: var(--color-success);"></div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding: 16px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600; font-size: 0.9rem;"><i data-lucide="droplet" style="width: 16px; color: var(--color-primary);"></i> Potable Water Supplies</span>
+            <span style="font-weight: 700; color: var(--color-primary);">42,000 Liters</span>
+          </div>
+          <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+            <div style="width: 85%; height: 100%; background: var(--color-primary);"></div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding: 16px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600; font-size: 0.9rem;"><i data-lucide="cross" style="width: 16px; color: var(--color-danger);"></i> Trauma Medical Kits</span>
+            <span style="font-weight: 700; color: var(--color-warning);">1,280 Kits</span>
+          </div>
+          <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+            <div style="width: 45%; height: 100%; background: var(--color-warning);"></div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding: 16px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600; font-size: 0.9rem;"><i data-lucide="truck" style="width: 16px; color: #C084FC;"></i> Emergency Ambulances</span>
+            <span style="font-weight: 700; color: #C084FC;">64 Vehicles</span>
+          </div>
+          <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+            <div style="width: 62%; height: 100%; background: #C084FC;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nearest Resource Matcher Table -->
+      <div class="glass-card" style="padding: 24px;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 16px;"><i data-lucide="navigation"></i> AI Distance & Matching Recommendations</h3>
+
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                <th style="padding: 12px;">Resource Node Name</th>
+                <th style="padding: 12px;">Category</th>
+                <th style="padding: 12px;">Distance</th>
+                <th style="padding: 12px;">Est. Arrival Time</th>
+                <th style="padding: 12px;">Available Capacity</th>
+                <th style="padding: 12px;">Status</th>
+                <th style="padding: 12px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="resource-matching-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- VIEW 5: VOLUNTEER NETWORK & LEADERBOARD -->
+    <section id="view-volunteers" class="view-section" style="display: none; padding-top: 20px;">
+      
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+          <i data-lucide="users" style="color: #C084FC;"></i> Volunteer Network & Mission Control
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Connect certified medical personnel, engineers, rescue drivers, and translators with active emergency assignments.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+        
+        <!-- Volunteer Quick Registration -->
+        <div class="glass-card" style="padding: 24px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 16px;"><i data-lucide="user-plus"></i> Join Emergency Response</h3>
+
+          <form id="volunteer-reg-form" onsubmit="handleVolunteerRegister(event)">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" id="vol-name" placeholder="Dr. Sarah Jenkins" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Primary Expertise Skill</label>
+              <select class="form-select" id="vol-skill" required>
+                <option value="Emergency Medical Doctor">Emergency Medical Doctor</option>
+                <option value="Trauma Nurse">Trauma Nurse</option>
+                <option value="Rescue Boat Driver">Rescue Boat Driver</option>
+                <option value="Civil Engineer">Civil Structural Engineer</option>
+                <option value="Logistics Cook">Logistics & Relief Cook</option>
+                <option value="Electrician">High-Voltage Electrician</option>
+                <option value="Multilingual Translator">Multilingual Translator</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Languages Spoken</label>
+              <input type="text" class="form-control" id="vol-languages" placeholder="English, Spanish, French" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Vehicle Access</label>
+              <select class="form-select" id="vol-vehicle">
+                <option value="4x4 Rescue Truck">4x4 Heavy Rescue Truck</option>
+                <option value="Ambulance Boat">Ambulance Motorboat</option>
+                <option value="Motorcycle">Emergency Motorcycle</option>
+                <option value="None">Foot / Public Transport</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-success" style="width: 100%; padding: 12px; margin-top: 10px;">
+              <i data-lucide="check"></i> Register as Active Responder
+            </button>
+          </form>
+        </div>
+
+        <!-- Volunteer Leaderboard & Active Mission Roster -->
+        <div class="glass-card" style="padding: 24px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <span><i data-lucide="award" style="color: var(--color-warning);"></i> Volunteer Honor Roll & Leaderboard</span>
+            <span class="badge badge-purple">3,412 Active</span>
+          </h3>
+
+          <div style="display: flex; flex-direction: column; gap: 14px;" id="volunteer-roster-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- VIEW 6: REQUEST AID PORTAL -->
+    <section id="view-request-help" class="view-section" style="display: none; padding-top: 20px;">
+      
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+          <i data-lucide="hand-heart" style="color: var(--color-danger);"></i> Citizen Emergency Request Portal
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Request immediate food, clean water, medical aid, shelter, or rescue dispatch. Priority scoring ensures immediate aid for critical victims.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        
+        <div class="glass-card" style="padding: 24px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 16px;"><i data-lucide="life-buoy"></i> Fill Emergency Request</h3>
+
+          <form id="aid-request-form" onsubmit="handleAidRequestSubmit(event)">
+            <div class="form-group">
+              <label class="form-label">Needed Resource Type</label>
+              <select class="form-select" id="aid-type" required>
+                <option value="Emergency Rescue Boat">Emergency Boat Rescue</option>
+                <option value="Medical Assistance">Medical Emergency / Ambulance</option>
+                <option value="Food & Water Ration">Food & Clean Water Supply</option>
+                <option value="Shelter Bed">Evacuation Shelter Bed</option>
+                <option value="Baby & Infant Care">Baby & Infant Care Supplies</option>
+                <option value="Elderly Medical Care">Elderly Medical Care</option>
+              </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label class="form-label">Number of People</label>
+                <input type="number" class="form-control" id="aid-count" value="4" min="1" required />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Urgency Priority</label>
+                <select class="form-select" id="aid-priority">
+                  <option value="CRITICAL">🔴 Critical (Life Threatening)</option>
+                  <option value="HIGH">🟠 High (Need within 2 hrs)</option>
+                  <option value="MEDIUM">🟡 Medium (Need today)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Address / Landmark Description</label>
+              <textarea class="form-control" id="aid-address" rows="3" placeholder="Exact location, street name, house color..." required>Near North Secondary School, 4th Floor rooftop.</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Contact Phone Number</label>
+              <input type="tel" class="form-control" id="aid-phone" value="+1 (555) 018-9921" required />
+            </div>
+
+            <button type="submit" class="btn btn-danger" style="width: 100%; padding: 12px;">
+              <i data-lucide="send"></i> Broadcast Help Request to Dispatchers
+            </button>
+          </form>
+        </div>
+
+        <div class="glass-card" style="padding: 24px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 16px;"><i data-lucide="clock"></i> Track Active Help Requests</h3>
+          
+          <div style="display: flex; flex-direction: column; gap: 14px;" id="help-request-tracker-list">
+            <!-- Active requests dynamic list -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- VIEW 7: ROLE DASHBOARDS & ANALYTICS -->
+    <section id="view-dashboards" class="view-section" style="display: none; padding-top: 20px;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+            <i data-lucide="layout-dashboard" style="color: var(--color-primary);"></i> Enterprise Command Dashboards
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted);" id="current-role-subtitle">Showing: Government Authority View</p>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-secondary" onclick="exportDataJSON()"><i data-lucide="download"></i> Export Data (JSON)</button>
+          <button class="btn btn-secondary" onclick="exportDataCSV()"><i data-lucide="file-spreadsheet"></i> Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Dashboard View Switch Tabs -->
+      <div class="glass-card" style="padding: 6px; display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto;" id="dashboard-tab-buttons">
+        <button class="btn btn-secondary active" onclick="switchDashboardTab('analytics')"><i data-lucide="bar-chart-2"></i> Real-Time Analytics</button>
+        <button class="btn btn-secondary" onclick="switchDashboardTab('govt')"><i data-lucide="building"></i> Government Command</button>
+        <button class="btn btn-secondary" onclick="switchDashboardTab('hospital')"><i data-lucide="heart-pulse"></i> Hospital & ICU</button>
+        <button class="btn btn-secondary" onclick="switchDashboardTab('admin')"><i data-lucide="shield-check"></i> Admin & Audit</button>
+      </div>
+
+      <!-- SUB-TAB 1: ANALYTICS & CHARTS -->
+      <div id="subdash-analytics" class="subdash-panel active">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+          
+          <div class="glass-card" style="padding: 20px;">
+            <h4 style="font-size: 1rem; margin-bottom: 14px;"><i data-lucide="pie-chart"></i> Disaster Incident Distribution</h4>
+            <div style="height: 280px; position: relative;">
+              <canvas id="chart-disaster-types"></canvas>
+            </div>
+          </div>
+
+          <div class="glass-card" style="padding: 20px;">
+            <h4 style="font-size: 1rem; margin-bottom: 14px;"><i data-lucide="line-chart"></i> 24-Hour Rescue Response Rate</h4>
+            <div style="height: 280px; position: relative;">
+              <canvas id="chart-response-rate"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SUB-TAB 2: GOVERNMENT COMMAND -->
+      <div id="subdash-govt" class="subdash-panel" style="display: none;">
+        <div class="glass-card" style="padding: 24px; margin-bottom: 20px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 14px;"><i data-lucide="radio"></i> Issue City-Wide Emergency Evacuation Broadcast</h3>
+          
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <input type="text" class="form-control" id="govt-alert-msg" placeholder="Type official evacuation message..." value="EVACUATION ORDER: All coastal zone residents proceed to High School Shelter immediately." style="flex: 1;" />
+            <button class="btn btn-danger" onclick="broadcastGovtAlert()"><i data-lucide="megaphone"></i> Broadcast Emergency Alert</button>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding: 24px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 16px;"><i data-lucide="shield"></i> Inter-Agency Coordination Matrix</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">State Disaster Management Authority (SDMA), Coast Guard, Fire Rescue, National Guard status.</p>
+        </div>
+      </div>
+
+      <!-- SUB-TAB 3: HOSPITAL & ICU -->
+      <div id="subdash-hospital" class="subdash-panel" style="display: none;">
+        <div class="glass-card" style="padding: 24px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 16px;"><i data-lucide="activity"></i> Regional Hospital ICU & Blood Inventory</h3>
+          
+          <div style="display: flex; flex-direction: column; gap: 14px;" id="hospital-capacity-list">
+            <!-- Dynamically populated hospital items -->
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-TAB 4: ADMIN & AUDIT -->
+      <div id="subdash-admin" class="subdash-panel" style="display: none;">
+        <div class="glass-card" style="padding: 24px;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 16px;"><i data-lucide="user-check"></i> System Audit Logs & User Security</h3>
+          
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                  <th style="padding: 10px;">Timestamp</th>
+                  <th style="padding: 10px;">Action Event</th>
+                  <th style="padding: 10px;">User Role</th>
+                  <th style="padding: 10px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="admin-audit-tbody">
+                <!-- Dynamically populated audit rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- SOS MODAL & SOUND ALARM OVERLAY -->
+  <div class="modal-overlay" id="sos-modal">
+    <div class="modal-container" style="border: 2px solid var(--color-danger); box-shadow: var(--shadow-glow-red);">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(220, 38, 38, 0.2); color: var(--color-danger); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;" class="pulse-marker-critical">
+          <i data-lucide="siren" style="width: 36px; height: 36px;"></i>
+        </div>
+        <h2 style="font-size: 1.6rem; color: var(--color-danger);">EMERGENCY SOS SIREN ACTIVATED</h2>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Broadcasting GPS Coordinates to Authorities & Playing Audible Alarm</p>
+      </div>
+
+      <div style="background: rgba(220, 38, 38, 0.1); padding: 16px; border-radius: var(--radius-md); font-size: 0.85rem; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span>Detected GPS Coordinates:</span> <strong>37.7749° N, 122.4194° W</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span>SMS Gateway Dispatch:</span> <span class="badge badge-safe">SENT TO 911 / 112</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;"><span>Nearby Volunteer Alert:</span> <span class="badge badge-purple">14 RESPONDERS NOTIFIED</span></div>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <button class="btn btn-danger" style="flex: 1; padding: 14px;" onclick="toggleSirenSound()" id="siren-sound-btn">
+          <i data-lucide="volume-2"></i> Mute Alarm Siren
+        </button>
+        <button class="btn btn-secondary" style="flex: 1; padding: 14px;" onclick="closeSOSModal()">
+          Close Overlay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING SOS SIREN BUTTON -->
+  <button class="sos-floating-btn" onclick="triggerSOSModal()" title="Instant Emergency SOS Broadcast">
+    <i data-lucide="siren" style="width: 28px; height: 28px;"></i>
+    SOS
+  </button>
+
+  <!-- FLOATING CHATBOT TOGGLE -->
+  <button class="chatbot-floating-btn" onclick="toggleChatbot()" title="Open Gemini AI Disaster Assistant">
+    <i data-lucide="bot" style="width: 26px; height: 26px;"></i>
+  </button>
+
+  <!-- CHATBOT DRAWER CONTAINER -->
+  <div class="chatbot-drawer" id="chatbot-drawer">
+    <div style="background: linear-gradient(135deg, #2563EB, #7C3AED); padding: 14px 18px; color: white; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <i data-lucide="bot"></i>
+        <div>
+          <div style="font-weight: 700; font-size: 0.95rem;">Gemini Disaster AI</div>
+          <div style="font-size: 0.7rem; opacity: 0.9;">Multilingual Voice & Text Assistant</div>
+        </div>
+      </div>
+      <button style="background: none; border: none; color: white; cursor: pointer;" onclick="toggleChatbot()">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <!-- Chat Messages Scroll Region -->
+    <div id="chat-messages-container" style="flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
+      <div style="background: var(--bg-card); padding: 10px 14px; border-radius: 12px; max-width: 85%; border: 1px solid var(--border-color);">
+        Hello! I am your AI Disaster Assistant. How can I help you? Ask about nearest shelters, first aid steps, or emergency helplines.
+      </div>
+    </div>
+
+    <!-- Quick Prompt Chips -->
+    <div style="padding: 6px 12px; display: flex; gap: 6px; overflow-x: auto; background: rgba(0,0,0,0.1);">
+      <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 4px 8px; white-space: nowrap;" onclick="sendQuickChat('Where is the nearest shelter?')">🏥 Nearest Shelter</button>
+      <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 4px 8px; white-space: nowrap;" onclick="sendQuickChat('First aid for burns')">🩹 First Aid Tips</button>
+      <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 4px 8px; white-space: nowrap;" onclick="sendQuickChat('Emergency helplines list')">📞 Helplines</button>
+    </div>
+
+    <!-- Chat Input Box -->
+    <div style="padding: 12px; border-top: 1px solid var(--border-color); display: flex; gap: 6px;">
+      <input type="text" class="form-control" id="chat-input" placeholder="Type or speak prompt..." onkeypress="handleChatKeyPress(event)" style="font-size: 0.85rem;" />
+      <button class="btn btn-secondary" onclick="toggleVoiceSpeechInput()" title="Voice Input Microphone" id="chat-mic-btn"><i data-lucide="mic"></i></button>
+      <button class="btn btn-primary" onclick="submitChatMessage()"><i data-lucide="send"></i></button>
+    </div>
+  </div>
+
+  <!-- Leaflet Map Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('PWA ServiceWorker registered with scope:', reg.scope))
+          .catch(err => console.log('ServiceWorker registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>

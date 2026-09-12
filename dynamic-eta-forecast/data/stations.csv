@@ -1,0 +1,21 @@
+station_id,station_code,station_name,latitude,longitude,zone,state,station_type
+STN001,NDLS,New Delhi,28.6431,77.2197,NR,Delhi,Terminal
+STN002,AGC,Agra Cantt,27.1577,77.9908,NCR,Uttar Pradesh,Junction
+STN003,VGLJ,VGL Jhansi,25.4484,78.5685,NCR,Uttar Pradesh,Junction
+STN004,BPL,Bhopal Junction,23.2599,77.4126,WCR,Madhya Pradesh,Junction
+STN005,NGP,Nagpur Junction,21.1458,79.0882,CR,Maharashtra,Junction
+STN006,BPQ,Balharshah Junction,19.8541,79.3578,CR,Maharashtra,Junction
+STN007,KZJ,Kazipet Junction,17.9784,79.5218,SCR,Telangana,Junction
+STN008,SC,Secunderabad Junction,17.4399,78.5017,SCR,Telangana,Junction
+STN009,HYB,Hyderabad Deccan,17.3930,78.4730,SCR,Telangana,Terminal
+STN010,BZA,Vijayawada Junction,16.5062,80.6480,SCR,Andhra Pradesh,Junction
+STN011,OGL,Ongole,15.5057,80.0499,SCR,Andhra Pradesh,Major
+STN012,NLR,Nellore,14.4426,79.9865,SCR,Andhra Pradesh,Major
+STN013,MAS,Chennai Central,13.0827,80.2707,SR,Tamil Nadu,Terminal
+STN014,MMCT,Mumbai Central,18.9696,72.8193,WR,Maharashtra,Terminal
+STN015,ST,Surat,21.2035,72.8392,WR,Gujarat,Junction
+STN016,BRC,Vadodara Junction,22.3072,73.1812,WR,Gujarat,Junction
+STN017,RTM,Ratlam Junction,23.3341,75.0376,WR,Madhya Pradesh,Junction
+STN018,KTA,Kota Junction,25.2138,75.8648,WCR,Rajasthan,Junction
+STN019,SBC,KSR Bengaluru,12.9781,77.5697,SWR,Karnataka,Terminal
+STN020,ERS,Ernakulam Junction,9.9675,76.2898,SR,Kerala,Terminal

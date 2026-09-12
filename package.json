@@ -1,0 +1,23 @@
+{
+  "name": "ai-disaster-resource-mapper",
+  "version": "2.4.0",
+  "description": "An AI-powered real-time disaster response and resource allocation platform.",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8080 --bind 0.0.0.0",
+    "start-public": "python -m http.server 8080 --bind 0.0.0.0",
+    "dev": "python -m http.server 8080 --bind 0.0.0.0",
+    "build": "echo 'Production static bundle ready in ./ root.'"
+  },
+  "keywords": [
+    "disaster-response",
+    "ai",
+    "resource-mapper",
+    "emergency-sos",
+    "gemini-ai",
+    "leaflet",
+    "saas"
+  ],
+  "author": "Antigravity Engineering",
+  "license": "MIT"
+}

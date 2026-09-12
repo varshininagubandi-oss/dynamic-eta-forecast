@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  disaster-mapper:
+    build: .
+    container_name: ai_disaster_resource_mapper
+    ports:
+      - "8080:80"
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
